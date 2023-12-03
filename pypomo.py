@@ -6,6 +6,15 @@ import datetime as dt
 from openpyxl import load_workbook
 from datetime import datetime
 import textwrap
+import os
+
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+# Construct paths to the mp3 and png files
+alarm_sound_path = os.path.join(script_dir, "alarm.mp3")
+icon_path = os.path.join(script_dir, "pypomo.png")
+excel_path = os.path.join(script_dir, "data.xlsx")
 
 # Global variables for start and end times
 var_start = 0
@@ -16,7 +25,7 @@ var_pomodoro = 0
 pygame.mixer.init()
 
 # Load the alarm sound
-alarm_sound = pygame.mixer.Sound("alarm.mp3")  # Ensure "alarm.mp3" is in the same directory as this script
+alarm_sound = pygame.mixer.Sound(alarm_sound_path)  # Ensure "alarm.mp3" is in the same directory as this script
 
 # Function to convert datetime string to datetime object
 def parse_datetime(dt_str):
@@ -25,7 +34,7 @@ def parse_datetime(dt_str):
 # Read data from Excel file and write stats
 def read_excel_write_stats():
     global project_data, type_data, data_df, work_total_day, work_total_week, work_total_month, work_total_year, break_total_day, break_total_week, break_total_month, break_total_year
-    excel_data = pd.ExcelFile('data.xlsx')
+    excel_data = pd.ExcelFile(excel_path)
     project_data = excel_data.parse('project')
     type_data = excel_data.parse('type')
     data_df = excel_data.parse('data')
@@ -229,7 +238,7 @@ def add_to_excel_sheet(file_path, sheet_name, new_data):
 #Update dropdowns after inserting Project and Types to Excel
 def update_dropdowns():
     global project_data, type_data, project_list, type_list
-    excel_data = pd.ExcelFile('data.xlsx')
+    excel_data = pd.ExcelFile(excel_path)
     project_data = excel_data.parse('project')
     type_data = excel_data.parse('type')
     project_list = project_data['description'].tolist()
@@ -248,12 +257,12 @@ def start_timer():
     # Check if the project name is not in the dropdown list and add it to the Excel file
     if project_name and project_name not in project_list:
         new_project_id = project_data['id'].max() + 1 if not project_data.empty else 1
-        add_to_excel_sheet('data.xlsx', 'project', [new_project_id, project_name])
+        add_to_excel_sheet(excel_path, 'project', [new_project_id, project_name])
 
     # Check if the type name is not in the dropdown list and add it to the Excel file
     if type_name and type_name not in type_list:
         new_type_id = type_data['id'].max() + 1 if not type_data.empty else 1
-        add_to_excel_sheet('data.xlsx', 'type', [new_type_id, type_name])
+        add_to_excel_sheet(excel_path, 'type', [new_type_id, type_name])
 
     # Update dropdowns and mappings with the new data
     update_dropdowns()
@@ -321,7 +330,7 @@ def stop_timer():
     }
 
     # Append data to the Excel file
-    append_to_excel('data.xlsx', 'data', new_data)
+    append_to_excel(excel_path, 'data', new_data)
     
     # Refresh the table with updated data
     # Re-read the data from the Excel file
@@ -385,13 +394,13 @@ def delete_project():
     # Remove the project from the Excel file
     global project_data
     project_data = project_data[project_data['id'] != project_id]
-    workbook = load_workbook('data.xlsx')
+    workbook = load_workbook(excel_path)
     sheet = workbook['project']
     for row in sheet.iter_rows(min_row=2):
         if row[0].value == project_id:
             sheet.delete_rows(row[0].row)
             break
-    workbook.save('data.xlsx')
+    workbook.save(excel_path)
 
     # Update project data and dropdown list
     read_excel_write_stats()
@@ -424,13 +433,13 @@ def delete_type():
     # Remove the type from the Excel file
     global type_data
     type_data = type_data[type_data['id'] != type_id]
-    workbook = load_workbook('data.xlsx')
+    workbook = load_workbook(excel_path)
     sheet = workbook['type']
     for row in sheet.iter_rows(min_row=2):
         if row[0].value == type_id:
             sheet.delete_rows(row[0].row)
             break
-    workbook.save('data.xlsx')
+    workbook.save(excel_path)
 
     # Update type data and dropdown list
     read_excel_write_stats()
@@ -458,14 +467,14 @@ def delete_line():
     selected_start_time = selected_row[0]
 
     # Load the Excel file
-    workbook = load_workbook('data.xlsx')
+    workbook = load_workbook(excel_path)
     sheet = workbook['data']
 
     # Find and delete the row in the Excel sheet
     for row in sheet.iter_rows(min_row=2):
         if row[0].value and dt.datetime.strptime(row[0].value, "%d/%m/%Y %I:%M:%S %p").strftime("%d/%m/%Y %I:%M:%S %p") == selected_start_time:
             sheet.delete_rows(row[0].row)
-            workbook.save('data.xlsx')
+            workbook.save(excel_path)
             break
 
     # Refresh the table
@@ -514,7 +523,7 @@ def on_list_breaks_checked():
     pass
 
 # Set the application icon
-window.iconphoto(True, tk.PhotoImage(file="pypomo.png"))
+window.iconphoto(True, tk.PhotoImage(file=icon_path))
 
 # Get the screen width and height of the primary display
 screen_width = window.winfo_screenwidth()
