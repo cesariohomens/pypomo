@@ -77,6 +77,9 @@ read_excel_write_stats()
 # Function to refresh the table based on checkbox states
 def refresh_table():
     filtered_data = data_df.copy()
+
+    # Sort the DataFrame by 'end_time' in descending order
+    filtered_data = filtered_data.sort_values(by='end_time', ascending=False)
     
     # Apply filters based on checkbox states
     if list_works_var.get() and list_breaks_var.get():
